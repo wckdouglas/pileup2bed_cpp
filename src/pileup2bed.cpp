@@ -43,9 +43,10 @@ void printTable(string chrom, string start, string ref,
 	int adenosine, thymine, cytidine, guanosine;
 	int referenceCount;
 	int print = 0;
+	count_dict counts;
 	transform(ref.begin(), ref.end(), ref.begin(), ::toupper);
 	// clean up forward/reverse strand data
-	if (A + C + T + G > 0)
+	if (A + C + T + G + refCount > 0)
 	{
 		strand = '+';
 		realRef = ref;
@@ -56,7 +57,21 @@ void printTable(string chrom, string start, string ref,
 		referenceCount = refCount;
 		print = 1;
 	}
-	else if (a + c + t + g > 0)
+	//print all variables 
+	counts["A"] = adenosine;
+	counts["C"] = cytidine;
+	counts["G"] = guanosine;
+	counts["T"] = thymine;
+	counts[realRef] = counts[realRef]+ referenceCount;
+	if (print == 1)
+	{
+		cov = adenosine + cytidine + thymine + guanosine + referenceCount;
+		cout << chrom << '\t' << mispos << '\t' << end << '\t';
+		cout << realRef << '\t' << cov << '\t' << strand << '\t';
+		cout << counts["A"] << '\t' << counts["C"] << '\t' << counts["T"] << '\t' << counts["G"] << '\t';
+		cout << insertion << '\t' << deletion << '\n';
+	}
+	if (a + c + t + g + refCountrev > 0)
 	{
 		strand = '-';
 		realRef = reverse_complement(ref);
@@ -69,7 +84,6 @@ void printTable(string chrom, string start, string ref,
 		print = 1;
 	}
 	//print all variables 
-	count_dict counts;
 	counts["A"] = adenosine;
 	counts["C"] = cytidine;
 	counts["G"] = guanosine;
@@ -102,7 +116,7 @@ void extractMismatches(string reads, string baseQuals, int cov,
 			qualThreshold, cov, refCount, refCountrev, start, end);
 	cov = cov +  deletion - n - N;
 	
-	if (cov > coverageThreshold && (refCount + refCountrev) !=  cov)
+	if (cov > coverageThreshold)
 	{
 		printTable(transcriptID, mispos, ref,
 					A, C, T, G, a, c, t, g, 
