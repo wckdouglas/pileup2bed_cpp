@@ -106,80 +106,81 @@ void fixpileup(int &A,int &C, int &T, int &G, int &N,
 				int &refCount, int &refCountrev,
 				int &start, int &end)
 {
-	int i = 0, j = 0, current = 0, qual;
-	char readPos, fixedReadPos;
+    int i = 0, j = 0, current = 0, qual;
+    char readPos, fixedReadPos;
     while (i < reads.length())
     {
-		readPos = reads.at(i);
+	readPos = reads.at(i);
         if (readPos == '+')
 		//insertion
         {
-			i ++ ; 
-			current = 0;
-			insertion ++;
-			while (isdigit(reads.at(i)))
-			{
-				current += current * 10 + (reads[i]-'0');
-				i++;
-			}
-			i += current - countDigits(current);
+	    i ++ ; 
+	    current = 0;
+	    insertion ++;
+	    while (isdigit(reads.at(i)))
+	    {
+		int digit = reads.at(i) - '0';
+		current = current * 10 + digit;
+		i++;
+	    }
+	    i += current - countDigits(current) + 1;
         }
-		else if (readPos == '-')
-		// deletion
-		{
-			i ++ ; 
-			current = 0;
-			deletion ++;
-			while (isdigit(reads.at(i)))
-			{
-				current += current * 10 + (reads[i]-'0');
-				i++;
-			}
-			i += current - countDigits(current);
-		}
+	else if (readPos == '-')
+	// deletion
+	{
+	    i ++ ; 
+	    current = 0;
+	    deletion ++;
+	    while (isdigit(reads.at(i)))
+	    {
+		current += current * 10 + (reads[i]-'0');
+		i++;
+	    }
+	    i += current - countDigits(current);
+	}
         else if (readPos == '^')
         {
             i ++;
-			if (islower(reads.at(i+1)) || reads.at(i+1) == ',')
-			{
-				start ++;
-			}
-			else if (isupper(reads.at(i+1)) || reads.at(i+1) == '.')
-			{
-				end ++;
-			}
+	    if (islower(reads.at(i+1)) || reads.at(i+1) == ',')
+	    {
+		start ++;
+	    }
+	    else if (isupper(reads.at(i+1)) || reads.at(i+1) == '.')
+	    {
+		end ++;
+	    }
         }
         else if (readPos == '$')
         {
-			if (islower(reads.at(i-1)) || reads.at(i-1) == ',')
-			{
-				end ++;
-			}
-			else if (isupper(reads.at(i-1)) || reads.at(i-1) == '.')
-			{
-				start ++;
-			}
+	    if (islower(reads.at(i-1)) || reads.at(i-1) == ',')
+	    {
+		end ++;
+	    }
+	    else if (isupper(reads.at(i-1)) || reads.at(i-1) == '.')
+	    {
+		start ++;
+	    }
         }
-		else if (readPos == '<' || readPos == '>')
-		{
-			cov --;
-		}
-		else 
-		{
+	else if (readPos == '<' || readPos == '>')
+	{
+	    cov --;
+	}
+	else 
+	{
             qual = baseQuals[j] - 33 ;
-			j++;
-			if (qual < qualThreshold || readPos == '*')
-			{
-				cov --;
-			}
-			else 
-			{
-				fixedReadPos = reverseStrandcomplement(readPos);
-				baseCount(A,C,T,G,N,
-						a,c,t,g,n,
-						fixedReadPos,refCount,refCountrev);
-			}
+	    j++;
+	    if (qual < qualThreshold || readPos == '*')
+	    {
+		cov --;
+	    }
+	    else 
+	    {
+		fixedReadPos = reverseStrandcomplement(readPos);
+		baseCount(A,C,T,G,N,
+			a,c,t,g,n,
+			fixedReadPos,refCount,refCountrev);
 		}
-		i++;
+	    }
+	    i++;
     }
 }

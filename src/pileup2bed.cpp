@@ -29,18 +29,26 @@ int usage(char *argv[])
 	return 0;
 }
 
-//printing all variables
-void printTable(string chrom, string start, string ref, 
-				int A, int C, int T, int G, 
-				int a, int c, int t, int g,
-				int insertion, int deletion, int refCount, int refCountrev)
+void printFunction(count_dict counts, string chrom, int mispos, int end,
+		    string realRef, int cov, string strand, int insertion, int deletion)
 {
-	char strand ;
+    cout << chrom << '\t' << mispos << '\t' << end << '\t';
+    cout << realRef << '\t' << cov << '\t' << strand << '\t';
+    cout << counts["A"] << '\t' << counts["C"] << '\t' << counts["T"] << '\t' << counts["G"] << '\t';
+    cout << insertion << '\t' << deletion << '\n';
+}
+
+//printing all variables
+count_dict printTable(string chrom, string start, string ref, 
+		int A, int C, int T, int G, 
+		int a, int c, int t, int g,
+		int insertion, int deletion, int refCount, int refCountrev)
+{
+	string strand ;
 	int mispos = atoi(start.c_str());
 	int end = mispos + 1;
 	int cov;
 	string realRef;
-	int adenosine, thymine, cytidine, guanosine;
 	int referenceCount;
 	int print = 0;
 	count_dict counts;
@@ -48,61 +56,40 @@ void printTable(string chrom, string start, string ref,
 	// clean up forward/reverse strand data
 	if (A + C + T + G + refCount > 0)
 	{
-		strand = '+';
-		realRef = ref;
-		adenosine = A;
-		cytidine = C;
-		thymine = T;
-		guanosine = G;
-		referenceCount = refCount;
-		print = 1;
+	    strand = "+";
+	    realRef = ref;
+	    referenceCount = refCount;
+	    counts["A"] = A;
+	    counts["C"] = C;
+	    counts["G"] = G;
+	    counts["T"] = T;
+	    counts[realRef] = referenceCount;
+	    cov =  counts["A"] + counts["C"] + counts["G"] + counts["T"];
+	    printFunction(counts, chrom, mispos, end,
+		    realRef, cov, strand, insertion, deletion);
 	}
-	//print all variables 
-	counts["A"] = adenosine;
-	counts["C"] = cytidine;
-	counts["G"] = guanosine;
-	counts["T"] = thymine;
-	counts[realRef] = counts[realRef]+ referenceCount;
-	if (print == 1)
-	{
-		cov = adenosine + cytidine + thymine + guanosine + referenceCount;
-		cout << chrom << '\t' << mispos << '\t' << end << '\t';
-		cout << realRef << '\t' << cov << '\t' << strand << '\t';
-		cout << counts["A"] << '\t' << counts["C"] << '\t' << counts["T"] << '\t' << counts["G"] << '\t';
-		cout << insertion << '\t' << deletion << '\n';
-	}
+
 	if (a + c + t + g + refCountrev > 0)
 	{
-		strand = '-';
-		realRef = reverse_complement(ref);
-		cov = a + c + t + g + refCountrev;
-		adenosine = a;
-		cytidine = c;
-		thymine = t;
-		guanosine = g;
-		referenceCount = refCountrev;
-		print = 1;
+	    strand = "-";
+	    realRef = reverse_complement(ref);
+	    referenceCount = refCountrev;
+	    counts["A"] = a;
+	    counts["C"] = c;
+	    counts["G"] = g;
+	    counts["T"] = t;
+	    counts[realRef] = referenceCount;
+	    cov =  counts["A"] + counts["C"] + counts["G"] + counts["T"];
+	    printFunction(counts, chrom, mispos, end,
+		    realRef, cov, strand, insertion, deletion);
 	}
-	//print all variables 
-	counts["A"] = adenosine;
-	counts["C"] = cytidine;
-	counts["G"] = guanosine;
-	counts["T"] = thymine;
-	counts[realRef] = counts[realRef]+ referenceCount;
-	if (print == 1)
-	{
-		cov = adenosine + cytidine + thymine + guanosine + referenceCount;
-		cout << chrom << '\t' << mispos << '\t' << end << '\t';
-		cout << realRef << '\t' << cov << '\t' << strand << '\t';
-		cout << counts["A"] << '\t' << counts["C"] << '\t' << counts["T"] << '\t' << counts["G"] << '\t';
-		cout << insertion << '\t' << deletion << '\n';
-	}
+	return counts;
 }
 
 // processing lines with mismatches 
 void extractMismatches(string reads, string baseQuals, int cov, 
 		string transcriptID, string mispos, 
-		string ref, int qualThreshold, int coverageThreshold)
+		string ref, int qualThreshold, int coverageThreshold, string line)
 {
 	int start = 0, end = 0, i = 0;
 	int A = 0, C = 0, T = 0, G = 0, N = 0; 
@@ -118,12 +105,23 @@ void extractMismatches(string reads, string baseQuals, int cov,
 	
 	if (cov > coverageThreshold)
 	{
-		printTable(transcriptID, mispos, ref,
-					A, C, T, G, a, c, t, g, 
-					insertion, deletion, refCount, refCountrev);
-		assert (A + T + G + C + 
-				a + c + t + g + 
-				refCount + refCountrev + deletion == cov);
+	    count_dict countTable = printTable(transcriptID, mispos, ref,
+		    A, C, T, G, a, c, t, g, 
+		    insertion, deletion, refCount, refCountrev);
+	    int infer_coverage = a + c + t + g + A + C + T + G + n + N + refCountrev + refCount;
+	    bool condition( infer_coverage + deletion != cov);
+	    if(condition)
+	    {
+		cerr << '\n';
+		cerr << "#######   ASSERTION #########" << '\n';
+		cerr << line << '\n';
+		cerr << "A:" << A << "  C:" << C << "  G: " << G << " T: " << T << '\n';
+		cerr << "a:" << a << "  c:" << c << "  g: " << g << " t: " << t << '\n';
+		cerr << "N:" << N << "  n:" << n << '\n';
+		cerr << "coverage:" << cov <<  "   infer coverage: " << infer_coverage <<  '\n';
+		cerr << "reverse ref: " << refCountrev << "    ref: " << refCount << '\n';
+		assert(condition);
+	    }
 	}
 		
 }
@@ -131,7 +129,7 @@ void extractMismatches(string reads, string baseQuals, int cov,
 
 // extract from each line different columns
 // and give them to further processing
-void processLine( stringList columns, int qualThreshold, int coverageThreshold) 
+void processLine( stringList columns, int qualThreshold, int coverageThreshold, string line) 
 {
 	if (columns[2] != "N" && columns[2] != "." && columns[2] != "_")
 	{
@@ -148,8 +146,8 @@ void processLine( stringList columns, int qualThreshold, int coverageThreshold)
 	            reads = columns[4];
 	            baseQuals = columns[5];
 	            assert ( baseQuals.length() == cov ) ;
-				extractMismatches(reads, baseQuals, cov, transcriptID, 
-					pos, ref, qualThreshold, coverageThreshold);
+		    extractMismatches(reads, baseQuals, cov, transcriptID, 
+					pos, ref, qualThreshold, coverageThreshold, line);
             }
         }
     }
@@ -165,7 +163,7 @@ void readFile(const char* filename, int qualThreshold, int coverageThreshold)
     for (string line; getline(myfile, line);)
     {
         stringList columns = split(line,'\t');
-        processLine(columns, qualThreshold, coverageThreshold);
+        processLine(columns, qualThreshold, coverageThreshold, line);
     }
 }
 
@@ -177,15 +175,15 @@ void readStream(int qualThreshold, int coverageThreshold)
     for (string line; getline(cin, line);)
     {
         stringList columns = split(line,'\t');
-        processLine(columns, qualThreshold, coverageThreshold);
+        processLine(columns, qualThreshold, coverageThreshold, line);
     }
 }
 
 void printHeader()
 {
     cout << "chrom\tstart\tend\tref\tcov" ;
-	cout << "\tstrand\tA\tC\tT\tG\t";
-	cout << "insertion\tdeletion\n";
+    cout << "\tstrand\tA\tC\tT\tG\t";
+    cout << "insertion\tdeletion\n";
 }
 
 // main function
@@ -203,6 +201,8 @@ int main(int argc, char *argv[])
     int qualThreshold, coverageThreshold;
     qualThreshold = atoi(argv[2]);
     coverageThreshold = atoi(argv[3]);
+    cerr << "Using quality threshold:  "<< qualThreshold << '\n';
+    cerr << "Using coverage threshold: "<< coverageThreshold << '\n';
     // read lines
     printHeader();
     if (strcmp(argv[1],"-") == 0)
