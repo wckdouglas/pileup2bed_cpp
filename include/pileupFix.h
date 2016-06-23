@@ -3,14 +3,14 @@
 
 using namespace std;
 
-int countDigits(int number) 
+int countDigits(int number)
 {
-	if (number < 10) 
+	if (number < 10)
 	{
 		return 1;
 	}
 	int count = 0;
-	while (number > 0) 
+	while (number > 0)
 	{
 		number /= 10;
 		count++;
@@ -21,19 +21,19 @@ int countDigits(int number)
 char reverseStrandcomplement(char base)
 {
 	char basepair;
-	if (base == 'a') 
+	if (base == 'a')
 	{
 		basepair = 't';
 	}
-	else if (base == 't') 
+	else if (base == 't')
 	{
 		basepair = 'a';
 	}
-	else if (base == 'c') 
+	else if (base == 'c')
 	{
 		basepair = 'g';
 	}
-	else if (base == 'g') 
+	else if (base == 'g')
 	{
 		basepair = 'c';
 	}
@@ -49,7 +49,7 @@ void baseCount(int &A, int &C, int &T,int &G, int &N,
 				char readPos, int &refCount, int &refCountrev)
 {
 	if (readPos == 'A')
-	{	
+	{
 		A ++;
 	}
 	else if (readPos == 'C')
@@ -98,89 +98,91 @@ void baseCount(int &A, int &C, int &T,int &G, int &N,
 	}
 }
 
-void fixpileup(int &A,int &C, int &T, int &G, int &N, 
+void fixpileup(int &A,int &C, int &T, int &G, int &N,
 				int &a, int &c, int &t, int&g, int &n,
-				int &deletion, int &insertion, 
+				int &deletion, int &insertion,
 				string reads, string baseQuals,
-				int qualThreshold, int &cov, 
+				int qualThreshold, int &cov,
 				int &refCount, int &refCountrev,
 				int &start, int &end)
 {
-    int i = 0, j = 0, current = 0, qual;
+    int i = 0, j = 0, current = 0, qual, shift=0;
     char readPos, fixedReadPos;
     while (i < reads.length())
     {
-	readPos = reads.at(i);
-        if (readPos == '+')
+		readPos = reads.at(i);
+    	if (readPos == '+')
 		//insertion
-        {
-	    i ++ ; 
-	    current = 0;
-	    insertion ++;
-	    while (isdigit(reads.at(i)))
-	    {
-		int digit = reads.at(i) - '0';
-		current = current * 10 + digit;
-		i++;
-	    }
-	    i += current - countDigits(current) + 1;
+    	{
+	    	i ++ ;
+	    	current = 0;
+	    	insertion ++;
+			shift = 0;
+	    	while (isdigit(reads.at(i)))
+	    	{
+				int digit = reads.at(i) - '0';
+				current = current * 10 + digit;
+				i++;
+				shift ++;
+	    	}
+	    	i += current - countDigits(current) + shift -1;
         }
-	else if (readPos == '-')
-	// deletion
-	{
-	    i ++ ; 
-	    current = 0;
-	    deletion ++;
-	    while (isdigit(reads.at(i)))
-	    {
-		current += current * 10 + (reads[i]-'0');
-		i++;
-	    }
-	    i += current - countDigits(current);
-	}
+		else if (readPos == '-')
+		// deletion
+		{
+	    	i ++ ;
+	    	current = 0;
+	    	deletion ++;
+	    	while (isdigit(reads.at(i)))
+	    	{
+				current += current * 10 + (reads[i]-'0');
+				i++;
+	    	}
+	    	i += current - countDigits(current);
+		}
         else if (readPos == '^')
         {
             i ++;
-	    if (islower(reads.at(i+1)) || reads.at(i+1) == ',')
-	    {
-		start ++;
-	    }
-	    else if (isupper(reads.at(i+1)) || reads.at(i+1) == '.')
-	    {
-		end ++;
-	    }
+	    	if (islower(reads.at(i+1)) || reads.at(i+1) == ',')
+	    	{
+				start ++;
+	    	}
+	    	else if (isupper(reads.at(i+1)) || reads.at(i+1) == '.')
+	    	{
+				end ++;
+	    	}
         }
         else if (readPos == '$')
         {
-	    if (islower(reads.at(i-1)) || reads.at(i-1) == ',')
-	    {
-		end ++;
-	    }
-	    else if (isupper(reads.at(i-1)) || reads.at(i-1) == '.')
-	    {
-		start ++;
-	    }
+	    	if (islower(reads.at(i-1)) || reads.at(i-1) == ',')
+	    	{
+				end ++;
+	    	}
+	    	else if (isupper(reads.at(i-1)) || reads.at(i-1) == '.')
+	    	{
+				start ++;
+	    	}
         }
-	else if (readPos == '<' || readPos == '>')
-	{
-	    cov --;
-	}
-	else 
-	{
-            qual = baseQuals[j] - 33 ;
-	    j++;
-	    if (qual < qualThreshold || readPos == '*')
-	    {
-		cov --;
-	    }
-	    else 
-	    {
-		fixedReadPos = reverseStrandcomplement(readPos);
-		baseCount(A,C,T,G,N,
-			a,c,t,g,n,
-			fixedReadPos,refCount,refCountrev);
+		else if (readPos == '<' || readPos == '>')
+		{
+	    	cov --;
 		}
-	    }
+		else
+		{
+        	qual = baseQuals[j] - 33 ;
+	    	j++;
+	    	if (qual < qualThreshold || readPos == '*')
+	    	{
+				cov --;
+	    	}
+	    	else
+	    	{
+				fixedReadPos = reverseStrandcomplement(readPos);
+				baseCount(A,C,T,G,N,
+						a,c,t,g,n,
+						fixedReadPos,refCount,refCountrev);
+			}
+		}
 	    i++;
     }
 }
