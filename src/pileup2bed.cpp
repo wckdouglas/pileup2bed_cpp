@@ -120,6 +120,7 @@ void extractMismatches(string reads, string baseQuals, int cov,
 			cerr << "N:" << N << "  n:" << n << '\n';
 			cerr << "coverage:" << cov <<  "   infer coverage: " << infer_coverage <<  '\n';
 			cerr << "reverse ref: " << refCountrev << "    ref: " << refCount << '\n';
+			cerr << "deletion: " << deletion <<  '\n';
 			assert(condition);
 	    }
 	}

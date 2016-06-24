@@ -106,7 +106,7 @@ void fixpileup(int &A,int &C, int &T, int &G, int &N,
 				int &refCount, int &refCountrev,
 				int &start, int &end)
 {
-    int i = 0, j = 0, current = 0, qual, shift=0;
+    int i = 0, j = 0, current = 0, digit, qual, shift=0;
     char readPos, fixedReadPos;
     while (i < reads.length())
     {
@@ -120,12 +120,12 @@ void fixpileup(int &A,int &C, int &T, int &G, int &N,
 			shift = 0;
 	    	while (isdigit(reads.at(i)))
 	    	{
-				int digit = reads.at(i) - '0';
+				digit = reads.at(i) - '0';
 				current = current * 10 + digit;
 				i++;
-				shift ++;
 	    	}
-	    	i += current - countDigits(current) + shift -1;
+			i -- ;
+	    	i += current + 1 ;
         }
 		else if (readPos == '-')
 		// deletion
@@ -135,10 +135,12 @@ void fixpileup(int &A,int &C, int &T, int &G, int &N,
 	    	deletion ++;
 	    	while (isdigit(reads.at(i)))
 	    	{
-				current += current * 10 + (reads[i]-'0');
+				digit = reads.at(i) - '0';
+				current = current * 10 + digit;
 				i++;
 	    	}
-	    	i += current - countDigits(current);
+			i --;
+	    	i += current + 1 ;
 		}
         else if (readPos == '^')
         {
@@ -151,6 +153,7 @@ void fixpileup(int &A,int &C, int &T, int &G, int &N,
 	    	{
 				end ++;
 	    	}
+	    	i++;
         }
         else if (readPos == '$')
         {
@@ -162,18 +165,22 @@ void fixpileup(int &A,int &C, int &T, int &G, int &N,
 	    	{
 				start ++;
 	    	}
+	    	i++;
         }
 		else if (readPos == '<' || readPos == '>')
 		{
 	    	cov --;
+	    	i++;
 		}
 		else
 		{
+			cerr << readPos << '\n';
         	qual = baseQuals[j] - 33 ;
 	    	j++;
 	    	if (qual < qualThreshold || readPos == '*')
 	    	{
 				cov --;
+	    		i++;
 	    	}
 	    	else
 	    	{
@@ -181,8 +188,8 @@ void fixpileup(int &A,int &C, int &T, int &G, int &N,
 				baseCount(A,C,T,G,N,
 						a,c,t,g,n,
 						fixedReadPos,refCount,refCountrev);
+	    		i++;
 			}
 		}
-	    i++;
     }
 }
