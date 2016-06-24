@@ -174,7 +174,6 @@ void fixpileup(int &A,int &C, int &T, int &G, int &N,
 		}
 		else
 		{
-			cerr << readPos << '\n';
         	qual = baseQuals[j] - 33 ;
 	    	j++;
 	    	if (qual < qualThreshold || readPos == '*')
