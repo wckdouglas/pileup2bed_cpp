@@ -18,177 +18,24 @@ int countDigits(int number)
 	return count;
 }
 
-char reverseStrandcomplement(char base)
+string reverseStrandcomplement(string base)
 {
-	char basepair;
-	if (base == 'a')
+	string basepair;
+	if (base.compare("A")==0)
 	{
-		basepair = 't';
+		basepair = "T";
 	}
-	else if (base == 't')
+	else if (base.compare("T")==0)
 	{
-		basepair = 'a';
+		basepair = "A";
 	}
-	else if (base == 'c')
+	else if (base.compare("C") == 0)
 	{
-		basepair = 'g';
+		basepair = "G";
 	}
-	else if (base == 'g')
+	else if (base.compare("G")==0)
 	{
-		basepair = 'c';
-	}
-	else
-	{
-		basepair = base;
+		basepair = "C";
 	}
 	return basepair;
-}
-
-void baseCount(int &A, int &C, int &T,int &G, int &N,
-				int &a, int &c, int &t, int &g,int &n,
-				char readPos, int &refCount, int &refCountrev)
-{
-	if (readPos == 'A')
-	{
-		A ++;
-	}
-	else if (readPos == 'C')
-	{
-		C ++;
-	}
-	else if(readPos == 'G')
-	{
-		G ++;
-	}
-	else if (readPos == 'T')
-	{
-		T ++;
-	}
-	else if (readPos == 'N')
-	{
-		N ++;
-	}
-	else if (readPos == 'a')
-	{
-		a ++;
-	}
-	else if (readPos == 'c')
-	{
-		c ++;
-	}
-	else if (readPos == 't')
-	{
-		t ++;
-	}
-	else if (readPos == 'g')
-	{
-		g ++;
-	}
-	else if (readPos == 'n')
-	{
-		n ++;
-	}
-	else if (readPos == '.')
-	{
-		refCount ++;
-	}
-	else if (readPos == ',')
-	{
-		refCountrev ++;
-	}
-}
-
-void fixpileup(int &A,int &C, int &T, int &G, int &N,
-				int &a, int &c, int &t, int&g, int &n,
-				int &deletion, int &insertion,
-				string reads, string baseQuals,
-				int qualThreshold, int &cov,
-				int &refCount, int &refCountrev,
-				int &start, int &end)
-{
-    int i = 0, j = 0, current = 0, digit, qual, shift=0;
-    char readPos, fixedReadPos;
-    while (i < reads.length())
-    {
-		readPos = reads.at(i);
-    	if (readPos == '+')
-		//insertion
-    	{
-	    	i ++ ;
-	    	current = 0;
-	    	insertion ++;
-			shift = 0;
-	    	while (isdigit(reads.at(i)))
-	    	{
-				digit = reads.at(i) - '0';
-				current = current * 10 + digit;
-				i++;
-	    	}
-			i -- ;
-	    	i += current + 1 ;
-        }
-		else if (readPos == '-')
-		// deletion
-		{
-	    	i ++ ;
-	    	current = 0;
-	    	deletion ++;
-	    	while (isdigit(reads.at(i)))
-	    	{
-				digit = reads.at(i) - '0';
-				current = current * 10 + digit;
-				i++;
-	    	}
-			i --;
-	    	i += current + 1 ;
-		}
-        else if (readPos == '^')
-        {
-            i ++;
-	    	if (islower(reads.at(i+1)) || reads.at(i+1) == ',')
-	    	{
-				start ++;
-	    	}
-	    	else if (isupper(reads.at(i+1)) || reads.at(i+1) == '.')
-	    	{
-				end ++;
-	    	}
-	    	i++;
-        }
-        else if (readPos == '$')
-        {
-	    	if (islower(reads.at(i-1)) || reads.at(i-1) == ',')
-	    	{
-				end ++;
-	    	}
-	    	else if (isupper(reads.at(i-1)) || reads.at(i-1) == '.')
-	    	{
-				start ++;
-	    	}
-	    	i++;
-        }
-		else if (readPos == '<' || readPos == '>')
-		{
-	    	cov --;
-	    	i++;
-		}
-		else
-		{
-        	qual = baseQuals[j] - 33 ;
-	    	j++;
-	    	if (qual < qualThreshold || readPos == '*')
-	    	{
-				cov --;
-	    		i++;
-	    	}
-	    	else
-	    	{
-				fixedReadPos = reverseStrandcomplement(readPos);
-				baseCount(A,C,T,G,N,
-						a,c,t,g,n,
-						fixedReadPos,refCount,refCountrev);
-	    		i++;
-			}
-		}
-    }
 }
