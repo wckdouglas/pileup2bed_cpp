@@ -26,7 +26,7 @@ def qualToInt(q):
 def qualityBases(bases, quals, qual_threshold):
     bases = np.array(list(bases))
     quals_list = np.array(map(qualToInt,quals.strip()))
-    #assert len(bases)==len(quals_list), 'bases != quals ' +'\n'+ ''.join(bases) +'!\n' + ''.join(quals)
+    assert len(bases)==len(quals_list), 'bases != quals ' +'\n'+ ''.join(bases) +'!\n' + ''.join(quals)
     quality_bases = bases[quals_list >= qual_threshold]
     return ''.join(quality_bases)
 
@@ -48,18 +48,22 @@ def parseBases(bases, ref):
         elif c == '+':
             j = i + 1
             insert_count = 0
+            insert_digit = ''
             while bases[j].isdigit():
-                insert_count += int(bases[j])
+                insert_digit += bases[j]
                 j += 1
+            insert_count = int(insert_digit)
             i = j + insert_count - 1
             insertion_bases += bases[(j):i+1]
             insertion += insert_count
         elif c == '-':
             j = i + 1
             del_count = 0
+            del_digit = ''
             while bases[j].isdigit():
-                del_count += int(bases[j])
+                del_digit += bases[j]
                 j += 1
+            del_count = int(del_digit)
             i = j + del_count - 1
             deletion_bases += bases[(j):i+1]
             deletion += del_count
@@ -86,9 +90,11 @@ def strandedBase(bases_string):
 def processLine(qual_threshold, cov_threshold, line):
     fields = line.split('\t')
     chrom,  pos, ref, cov, bases, quals = fields
-    if int(cov) > cov_threshold:
+    coverage = int(cov)
+    quals = quals.strip()
+    if coverage > cov_threshold:
         bases, insertion, deletion, insertion_bases, deletion_bases = parseBases(bases, ref)
-        assert len(bases) == int(cov),'Wrongly parsed!! ' + bases + ' ' + cov
+        assert len(bases) == len(quals),'Wrongly parsed!! ' + bases + ' ' + str(coverage)
         bases = qualityBases(bases, quals, qual_threshold)
         bases_positive, bases_negative = strandedBase(bases)
         insertion_positive, insertion_negative = strandedBase(insertion_bases)
@@ -112,7 +118,7 @@ def main():
     handle = sys.stdin if filename == '-' else open(filename,'r')
     for lineno, line in enumerate(handle):
         lineFunc(line)
-        if lineno % 10000 == 0:
+        if lineno % 100000 == 0:
             print('Parsed %i lines' %(lineno), file=sys.stderr)
 
 if __name__ == '__main__':

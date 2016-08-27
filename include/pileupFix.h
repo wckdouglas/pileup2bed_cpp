@@ -18,7 +18,7 @@ int countDigits(int number)
 	return count;
 }
 
-string reverseStrandcomplement(string base)
+string complementBases(string base)
 {
 	string basepair;
 	if (base.compare("A")==0)
@@ -36,6 +36,10 @@ string reverseStrandcomplement(string base)
 	else if (base.compare("G")==0)
 	{
 		basepair = "C";
+	}
+	else if (base.compare("N")==0)
+	{
+		basepair = "N";
 	}
 	return basepair;
 }

@@ -29,48 +29,95 @@ int usage(char *argv[])
 	return 0;
 }
 
-string parseBases(string bases, string ref, int &deletion, int &insertion)
+string parseBases(string bases, string ref, int &deletion, int &insertion, string &insertion_bases, string &deletion_bases)
 {
-    int i_max = bases.size(), i = 0;
+    int i_max = bases.length(), i = 0, j, insert_count, del_count;
     string _bases = "";
+	string reverse_ref;
+	string insert_digit, del_digit;
 	char c;
     while (i < i_max)
 	{
-        c = bases[i];
+        c = bases.at(i);
         if (c == '.')
 		{
-            _bases = _bases +  ref;
+            _bases +=  ref;
 		}
         else if( c == ',')
 		{
-            _bases = _bases + reverseStrandcomplement(ref);
+			reverse_ref = complementBases(ref);
+			transform(reverse_ref.begin(), reverse_ref.end(), reverse_ref.begin(), ::tolower);
+            _bases += reverse_ref;
 		}
-/*
-        elif c == '^':
-            i += 1
-        elif c == '+':
-            j = i + 1
-            indel_count = 0
-            while bases[j].isdigit():
-                indel_count += int(bases[j])
-                j += 1
-            i = j + indel_count - 1
-            insertion += indel_count
-        elif c == '-':
-            j = i + 1
-            indel_count = 0
-            while bases[j].isdigit():
-                indel_count += int(bases[j])
-                j += 1
-            i = j + indel_count - 1
-            deletion += indel_count
-        elif c != '$':
-            _bases += c
-*/
+        else if (c == '+')
+		{
+            j = i + 1;
+            insert_count = 0;
+			insert_digit = "";
+            while ( isdigit(bases.at(j)) )
+			{
+                insert_digit +=  bases.at(j);
+                j ++;
+			}
+			stringstream ss;
+			insert_count = atoi(insert_digit.c_str());
+			cout << insert_count << endl;
+            i = j + insert_count - 1;
+            insertion_bases += bases.substr( j , i+1 );
+            insertion += insert_count;
+		}
+        else if (c == '-')
+		{
+            j = i + 1;
+            del_count = 0;
+			del_digit = "";
+            while ( isdigit(bases.at(j)) )
+			{
+                del_digit +=  bases.at(j);
+                j ++;
+			}
+			stringstream ss;
+			del_count = atoi(del_digit.c_str());
+            i = j + del_count - 1;
+        	deletion_bases += bases.substr( j , i+1 );
+            deletion += del_count;
+		}
+		else if (c == '^')
+		{
+		 i ++;
+		}
+		else if (c!='$')
+		{
+			_bases += c;
+		}
         i ++;
 	}
-	cout << _bases << endl;
-//    return _bases, insertion, deletion
+    return _bases;
+}
+
+string qualityBases(string bases, string quals, int qual_threshold)
+{
+	stringstream ss;
+	string high_qual_bases = "";
+	int no_of_base = bases.length(), i = 0;
+	int base_qual;
+	string hq_base;
+	for (i = 0; i < no_of_base; i++)
+	{
+		base_qual = quals[i] - 33;
+		if (base_qual >= qual_threshold)
+		{
+			ss << bases.at(i);
+			ss >> hq_base;
+			high_qual_bases += hq_base;
+		}
+	}
+	return high_qual_bases;
+}
+
+void countBase( string high_qual_bases, string positive_strand_bases, string negative_strand_bases)
+{
+	
 }
 
 // extract from each line different columns
@@ -80,7 +127,10 @@ void processLine( stringList columns, int qualThreshold, int coverageThreshold, 
 	if (columns[2] != "N" && columns[2] != "." && columns[2] != "_")
 	{
 	    string transcriptID, pos, ref, bases, quals;
+		string extracted_bases, high_qual_bases;
+		string positive_strand_bases = "", negative_strand_bases= "";
 		int insertion = 0, deletion = 0;
+    	string insertion_bases = "", deletion_bases = "";
 	    int cov;
 	    if (columns.size() == 6)
 	    {
@@ -93,7 +143,11 @@ void processLine( stringList columns, int qualThreshold, int coverageThreshold, 
 	            bases = columns[4];
 	    		quals = columns[5];
 	            assert( quals.length() == cov ) ;
-				parseBases(bases, ref, deletion, insertion );
+				extracted_bases = parseBases(bases, ref, deletion, insertion , insertion_bases, deletion_bases);
+				cout << extracted_bases << '\n' << quals << endl;
+				cout << extracted_bases.length() << '\n' << cov	 << endl;
+				assert(extracted_bases.length() == cov);
+				high_qual_bases = qualityBases(extracted_bases, quals, qualThreshold);
             }
         }
     }
@@ -157,7 +211,7 @@ int main(int argc, char *argv[])
     else
     {
         const char* filename = argv[1];
-	cerr << "Reading from: " << filename << endl;
+		cerr << "Reading from: " << filename << endl;
         readFile(filename, qualThreshold, coverageThreshold);
     }
     return 0;
